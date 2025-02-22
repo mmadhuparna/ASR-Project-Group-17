@@ -1,6 +1,7 @@
 # app.py
 from fastapi import FastAPI, File, UploadFile, HTTPException,Form, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
 import wave
 from pydantic import BaseModel
 import torch
@@ -48,6 +49,7 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
 
 
 # Input model parameters
@@ -236,35 +238,18 @@ def convert_audio_blob_to_bytes(audioBlob: str) -> bytes:
 # Optional health check endpoint
 @app.get("/")
 def read_home():
-    html_file_path = os.path.join(os.path.dirname(__file__), "index.html")
-    print("html_file_path", html_file_path) 
-    if os.path.exists(html_file_path):
-        with open(html_file_path, "r") as file:
-            html_content = file.read()
-        return HTMLResponse(content=html_content)
-    else:
-        return HTMLResponse(content="<h1>File not found</h1>", status_code=404)
+    return templates.TemplateResponse("index.html")
     
 @app.get("/asr-live")
 def read_asr():
-    html_file_path = os.path.join(os.path.dirname(__file__), "live.html") 
-    if os.path.exists(html_file_path):
-        with open(html_file_path, "r") as file:
-            html_content = file.read()
-        return HTMLResponse(content=html_content)
-    else:
-        return HTMLResponse(content="<h1>File not found</h1>", status_code=404)
+    return templates.TemplateResponse("live.html")
     
 @app.get("/chatroom")
 def read_asr():
-    html_file_path = os.path.join(os.path.dirname(__file__), "chat.html") 
-    if os.path.exists(html_file_path):
-        with open(html_file_path, "r") as file:
-            html_content = file.read()
-        return HTMLResponse(content=html_content)
-    else:
-        return HTMLResponse(content="<h1>File not found</h1>", status_code=404)
+    return templates.TemplateResponse("chat.html")
 
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8080)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8080)
