@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Speech Recognition</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+</head>
+<body>
+    <div id="container">
+    <header>
+        <h1>Automatic Speech Recognition For English</h1>
+        <div id="menu">
+            <ul>
+                <li><a href="http://127.0.0.1:8080/">Home</a></li>
+                <span class="divider">|</span>
+                <li><a href="http://127.0.0.1:8080/asr-live">Translate live</a></li>
+                <span class="divider">|</span>
+                <li><a href="http://127.0.0.1:8080/chatroom">Chatroom</a></li>
+            </ul>
+        </div>
+    </header>
+    <div id="asrcontainer">
+        <div id="left">
+            <img src="/static/images/live.avif" id="voiceImage">
+        </div>
+
+    <div class="container my-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Live Speech to text Conversion</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Messages Display -->
+                        <div id="messages" class="mb-3" style="height: 300px; overflow-y: scroll;"></div>
+
+                        <div class="record-section">
+                            <div id="timer" class="timer">00:00</div>
+                            <div id="actions">
+                                <i class="material-icons" id="recordButton" style="color:green;">mic_off</i>
+                                
+                            </div>
+                        </div>
+    
+                        <!-- Chat Input -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+    <script>
+        let mediaRecorder;
+        let ws;
+        let audioChunks = [];
+        let recording = false;
+        let timerInterval;
+        let startTime;
+
+        document.getElementById('recordButton').addEventListener("click", async () => {
+            if(!recording){
+            startRecording();
+            
+            document.getElementById("recordButton").innerText = "mic"
+            }
+            else{
+                stopRecording();
+                document.getElementById("recordButton").innerText = "mic_off"
+            }
+        })
+
+        function startRecording() {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+            console.log(audioChunks)
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                        if (recording) {
+                            sendAudioChunks();
+                        }
+                    };
+                    mediaRecorder.onstop = () => {
+                        audioChunks = []
+                        console.log("Recording stopped");
+                    };
+                    mediaRecorder.start(500);  // Record in small chunks (every second)
+                    recording = true;
+
+                    // Connect to WebSocket server
+                    ws = new WebSocket("ws://127.0.0.1:8080/live");
+
+                    ws.onopen = () => {
+                        console.log("Recording starts");
+                    };
+
+                    ws.onmessage = (event) => {
+                        document.getElementById("messages").innerText = event.data;
+                    };
+                });
+        }
+
+        function stopRecording() {
+            if (mediaRecorder) {
+                mediaRecorder.stop();
+                recording = false;           
+            }
+            clearInterval(timerInterval);
+        }
+
+        function sendAudioChunks() {
+            const blob = new Blob(audioChunks, { type: "audio/wav" });
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const arrayBuffer = reader.result;
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(arrayBuffer);
+                }
+            };
+            reader.readAsArrayBuffer(blob);
+            audioChunks = [];  // Clear the chunks after sending
+        }
+
+        function updateTimer() {
+            const elapsed = Date.now() - startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('timer').textContent = `${pad(minutes)}:${pad(seconds)}`;
+        }
+        function pad(number) {
+            return number < 10 ? '0' + number : number;
+        }
+    </script>
+</body>
+</html>

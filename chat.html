@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Real-time Speech-to-Text with WebSocket</title>
+        <link rel="stylesheet" href="/static/css/style.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <style>
+        
+        #left{
+            width: 350px;
+
+        }
+
+        #voiceImage{
+            width:auto;
+            height:90%;
+            padding-top: 40px;
+        }
+
+        .button {
+            padding: 5px 10px;
+            margin-left: 10px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .record-container {
+            display: flex;
+        }
+
+        .record-section {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            border: 1px solid #D3D3D3;
+            padding: 10px 0 10px 20px;
+            justify-content: space-between;
+            margin: 0 auto;         
+            height: 40px;
+            border-radius:5px;
+        }
+
+
+        #listen {
+            border: 1px solid green;
+            width: 500px;
+            height: 25px;
+            display: inline-block;
+            vertical-align: middle;
+            text-align: left;
+            padding: 20px;
+        }
+
+        .submit_btn {
+            padding: 12px 18px;
+            margin-left: 10px;
+            background-color: #007BFF;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+        }
+
+        button:disabled {
+            background-color: #ccc !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+        }
+
+        #asr-container {
+            height: auto;
+            padding-bottom: 70px;
+            box-sizing: border-box;
+        }
+        .mb-2{
+            width: 100%;
+            margin:0 auto;
+            overflow:auto
+        }
+
+        #converse {
+            position: relative;
+
+
+            padding: 20px;
+        }
+
+        .card{
+            width:92%;
+            margin: 0 auto;
+        }
+
+        #transcription {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+            height: 300px;
+            width: 450px;
+            text-align: center;
+            margin: 0 auto;
+
+        }
+
+        #transcript {
+            text-align: left;
+            list-style: none;
+            min-width: 100%;
+            padding-inline-start: 0 !important;
+        }
+
+        #list {
+            list-style: none
+        }
+
+        .listItem {
+            padding: 2px 5px;
+            border: 1px solid #90EE90;
+            margin-top: 20px;
+            font-size: 12px;
+            border-radius: 8px;
+
+        }
+
+        #actions {
+            display: flex;
+            align-items: center
+        }
+
+        #timer {
+            font-size: 18px;
+            display: flex;
+
+        }
+
+        #record-btn img {
+            width: 50px;
+            height: 50px;
+        }
+
+        #recordButton {
+            cursor: pointer;
+            display: flex;
+            align-self: fle-end;
+        }
+        .nameText {
+            color:blue
+        }
+        </style>
+    </head>
+    <body>
+        <!-- User Join Modal -->
+        <div
+            class="modal fade"
+            id="joinModal"
+            tabindex="-1"
+            aria-labelledby="joinModalLabel"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="joinModalLabel">Enter Your Username</h5>
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                    <div class="modal-body">
+                        <input
+                            type="text"
+                            id="usernameInput"
+                            class="form-control"
+                            placeholder="Enter your username"
+                        >
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="joinButton">Join</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="container">
+        <header>
+            <h1>Automatic Speech Recognition For English</h1>
+            <div id="menu">
+                <ul>
+                    <li><a href="http://127.0.0.1:8080/">Home</a></li>
+                    <span class="divider">|</span>
+                    <li><a href="http://127.0.0.1:8080/asr-live">Translate live</a></li>
+                    <span class="divider">|</span>
+                    <li><a href="http://127.0.0.1:8080/chatroom">Chatroom</a></li>
+                </ul>
+            </div>
+        </header>
+        <div id="asrcontainer">
+            <div id="left">
+                <img src="/static/images/chat.png" id="voiceImage">
+            </div>
+        <div class="container my-4">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Chat Room</h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- Messages Display -->
+                            <div id="messages" class="mb-3" style="height: 300px; overflow-y: scroll;"></div>
+                            <div class="record-section">
+                                <div id="timer" class="timer">00:00</div>
+                                <div id="actions">
+                                    <i class="material-icons" id="recordButton" style="color:green;">mic_off</i>
+                                    <button id="submit_btn" class="button" disabled>Send</button>
+                                </div>
+                            </div>
+                            <!-- Chat Input -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Display Transcription -->
+        <div id="transcription">
+            <ul id="transcript"></ul>
+        </div>
+        </div>
+    </div>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+        <script>
+        let websocket;
+        let recorder;
+        let isRecording = false;
+        let audioBlob;
+        let username = ''
+        let startTime;
+        let timerInterval;
+        const modalElement = document.getElementById('joinModal');
+        const modal = new bootstrap.Modal(modalElement);
+        // Establish WebSocket connection as soon as the page loads
+        window.onload = function() {
+            connectWebSocket();
+            let isRecording = false;
+            toggleSubmitButton('disable')
+            modal.show()
+        };
+        document.getElementById("recordButton").addEventListener("click", async () => {
+            if (isRecording) {
+                // Stop recording
+                recorder.stop();
+                isRecording = false;
+                clearInterval(timerInterval);
+                toggleSubmitButton('disable')
+                document.getElementById("recordButton").innerText = "mic_off"
+            } else {
+                // Start recording
+                document.getElementById("recordButton").innerText = "mic"
+                await startRecording();
+                isRecording = true;
+                toggleSubmitButton('enable')
+            }
+        });
+        document.getElementById('submit_btn').addEventListener('click', async () => {
+            recorder.stop()
+            document.getElementById("recordButton").innerText = "mic_off"
+            toggleSubmitButton('disable')
+            clearInterval(timerInterval);
+            document.getElementById('timer').textContent = "00:00"
+
+
+           
+        })
+        document.getElementById("joinButton").addEventListener("click", () => {
+            username = document.getElementById("usernameInput").value.trim();
+            console.log("usrnme", username)
+            if (username) {
+                // Close the join modal
+                //new bootstrap.Modal(document.getElementById('joinModal')).hide();
+                // Send the join event to the server
+                websocket.send(JSON.stringify({
+                    type: "join",
+                    username: username
+                }));
+                modal.hide()
+            } else {
+                alert("Please enter a username.");
+            }
+        });
+
+        function toggleSubmitButton(status) {
+            const submitButton = document.getElementById('submit_btn')
+            if (status === 'enable') {
+                submitButton.disabled = false
+                if (submitButton.classList.contains('disable')) {
+                    submitButton.classList.remove('disabled')
+                }
+            } else {
+                submitButton.disabled = true
+                submitButton.classList.add('disabled')
+            }
+        }
+
+        function addTranscriptedMessage(message, user) {
+            console.log(user, username)
+        const messagesDiv = document.getElementById("messages");
+        const messageDiv = document.createElement("div");
+        const chatText = document.createElement("div")
+        const text = document.createElement("div")
+        const name = document.createElement("div")
+        chatText.style.width = 'auto';
+        chatText.style.padding = '5px 10px';
+        chatText.style.textAlign = 'left'
+        chatText.style.borderRadius = '5px'
+        name.style.color = 'blue'
+        name.style.fontSize = '14px'
+        text.style.fontSize = '14px'
+        
+        
+        messageDiv.classList.add("mb-2");
+        
+        if(user === "System"){
+            chatText.style.textAlign = 'center'
+            chatText.style.margin = '0 auto'
+            user = ''
+        }
+        else if (user === username){
+            user = 'You'
+            console.log("...1")
+            chatText.style.float = 'right'
+            chatText.style.backgroundColor = '#ADD8E6'
+            
+        }
+        else {
+            chatText.style.float = 'left'
+            chatText.style.backgroundColor = '#f1f1f1'
+        }
+
+        text.innerHTML = `${message}`;
+        name.innerHTML = `${user}`;
+        chatText.appendChild(name)
+        chatText.appendChild(text)
+        messageDiv.appendChild(chatText);
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        // Connect to WebSocket server
+        function connectWebSocket() {
+            console.log(WebSocket)
+            websocket = new WebSocket("ws://127.0.0.1:8080/chat");
+            websocket.onopen = () => console.log("WebSocket connected");
+            websocket.onclose = () => console.log("WebSocket disconnected");
+            websocket.onmessage = (event) => {
+                console.log(event.data)
+                const data = JSON.parse(event.data)
+                console.log(data)
+                // Update transcription in real-time as the server sends transcriptions
+                addTranscriptedMessage(data['message'],data['username'])
+            };
+        }
+
+        function convertBlobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[
+                    1]); // Base64 string without the data URL prefix
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+        // Start recording as soon as the page loads and continuously send data to the server
+        async function startRecording() {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true
+            });
+            recorder = new MediaRecorder(stream);
+            recorder.ondataavailable = (event) => {
+                audioBlob = event.data;
+            };
+            recorder.onstop = async (event) => {
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    console.log("audioBlob", audioBlob)
+                    const base64Audio = await convertBlobToBase64(audioBlob)
+                    // Send audio data to WebSocket server
+                    //websocket.send(audioBlob);
+                    websocket.send(JSON.stringify({
+                        type: "message",
+                        username: username,
+                        audioBlob: base64Audio
+                    }));
+                }
+            };
+            recorder.start(); // Collect data every 100ms
+        }
+
+        function updateTimer() {
+            const elapsed = Date.now() - startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('timer').textContent = `${pad(minutes)}:${pad(seconds)}`;
+        }
+        function pad(number) {
+            return number < 10 ? '0' + number : number;
+        }
+        </script>
+    </body>
+</html>

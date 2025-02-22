@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI with UI</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <div id="container">
+        <header>
+            <h1>Automatic Speech Recognition For English</h1>
+            <div id="menu">
+                <ul>
+                    <li><a href="http://127.0.0.1:8080/">Home</a></li>
+                    <span class="divider">|</span>
+                    <li><a href="http://127.0.0.1:8080/asr-live">Translate live</a></li>
+                    <span class="divider">|</span>
+                    <li><a href="http://127.0.0.1:8080/chatroom">Chatroom</a></li>
+                </ul>
+            </div>
+        </header>
+        <div id="asrcontainer">
+            <div id="left">
+                <img src="/static/images/home.png" id="voiceImage">
+            </div>
+            <div id="asr">
+                <h3>Get your speech translated to text</h3>
+                
+                <div class="asr-translate">                   
+                        <div class="file-upload-container">
+                            <label for="fileInput" class="file-label">Choose a file</label>
+                            <input id="fileInput" type="file" class="file-input" onchange="handleFileChange(event)">
+                            <div class="file-name" id="file-name"></div>
+                        </div>
+
+                        <div class="audio-record">
+                            <div>
+                                <button id="recordButton">Start Recording</button>
+                            </div>
+                        </div>
+                    <div id="transcription">
+                        <span id="transcript"></span>
+                    </div>
+                    <button id="clear">clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
