@@ -2,23 +2,21 @@ let isRecording = false;
 let recorder;
 let audioBlob;
 
-let transcriptElement = document.getElementById('transcript').innerText
-if(transcriptElement){
-    const clear = document.getElementById('clear').innerText
-    clear.style.display = 'block'
+let transcriptElement = document.getElementById("transcript").innerText;
+if (transcriptElement) {
+  const clear = document.getElementById("clear").innerText;
+  clear.style.display = "block";
 }
 
 function handleFileChange(event) {
   const fileInput = event.target;
-  const fileNameDisplay = document.getElementById('file-name');
-  const progressBarContainer = document.getElementById('progress-bar-container');
-  const progressBar = document.getElementById('progress-bar');
+  const fileNameDisplay = document.getElementById("file-name");
 
   // Display file name
-  const fileName = fileInput.files[0] ? fileInput.files[0].name : '';
+  const fileName = fileInput.files[0] ? fileInput.files[0].name : "";
   if (fileName) {
     fileNameDisplay.textContent = `${fileName}`;
-    fileNameDisplay.style.display = 'block';
+    fileNameDisplay.style.display = "block";
   }
 }
 // audio recording handling
@@ -35,7 +33,6 @@ document.getElementById("recordButton").addEventListener("click", async () => {
     document.getElementById("recordButton").textContent = "Stop Recording";
   }
 });
-
 
 // File upload handling
 document
@@ -56,12 +53,12 @@ document
       });
       const result = await response.json();
       console.log("File upload transcription result: ", result);
-      document.getElementById('transcription').style.display = 'block'
+      document.getElementById("transcription").style.display = "block";
       document.getElementById("transcript").innerText = result.transcription;
-      if(result.transcription){
-        document.getElementById('clear').style.display = 'block'
-        document.getElementById("file-name").innerText = ""       
-    }
+      if (result.transcription) {
+        document.getElementById("clear").style.display = "block";
+        document.getElementById("file-name").innerText = "";
+      }
     }
   });
 async function startRecording() {
@@ -82,18 +79,17 @@ async function startRecording() {
     });
     const result = await response.json();
     console.log("...1", result);
-     document.getElementById('transcription').style.display = 'block'
+    document.getElementById("transcription").style.display = "block";
     document.getElementById("transcript").innerText = result.transcription;
-    if(result.transcription){
-        document.getElementById('clear').style.display = 'block'
+    if (result.transcription) {
+      document.getElementById("clear").style.display = "block";
     }
   };
   recorder.start();
 }
 
-document.getElementById('clear').addEventListener('click', (() => {
-  
-    document.getElementById('transcript').innerText = ''
-    document.getElementById('transcription').style.display = 'none'
-    document.getElementById('clear').style.display = 'none'
-}))
+document.getElementById("clear").addEventListener("click", () => {
+  document.getElementById("transcript").innerText = "";
+  document.getElementById("transcription").style.display = "none";
+  document.getElementById("clear").style.display = "none";
+});

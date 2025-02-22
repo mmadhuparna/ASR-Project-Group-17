@@ -1,5 +1,5 @@
 # app.py
-from fastapi import FastAPI, File, UploadFile, HTTPException,Form, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, UploadFile, HTTPException,Form, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 import wave
@@ -49,7 +49,7 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory="templates")
 
 
 # Input model parameters
@@ -237,16 +237,16 @@ def convert_audio_blob_to_bytes(audioBlob: str) -> bytes:
 
 # Optional health check endpoint
 @app.get("/")
-def read_home():
-    return templates.TemplateResponse("index.html")
+def read_home(request: Request):
+    return templates.TemplateResponse("index.html",{"request": request})
     
 @app.get("/asr-live")
-def read_asr():
-    return templates.TemplateResponse("live.html")
+def read_asr(request: Request):
+    return templates.TemplateResponse("live.html",{"request": request})
     
 @app.get("/chatroom")
-def read_asr():
-    return templates.TemplateResponse("chat.html")
+def read_asr(request: Request):
+    return templates.TemplateResponse("chat.html",{"request": request})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8080)
